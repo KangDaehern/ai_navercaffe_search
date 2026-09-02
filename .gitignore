@@ -1,0 +1,9 @@
+.venv/
+.browser-profile/
+artifacts/
+output/
+__pycache__/
+*.py[cod]
+.env
+.idea/
+.vscode/
