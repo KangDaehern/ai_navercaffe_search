@@ -15,3 +15,4 @@ class CafePost:
     date: str = ""
     text: str = ""
     comments: list[CafeComment] = field(default_factory=list)
+    has_comments: bool = False

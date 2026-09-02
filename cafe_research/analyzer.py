@@ -8,7 +8,7 @@ def usable_posts(posts: list[CafePost]) -> list[CafePost]:
 
 def _source_text(posts: list[CafePost]) -> str:
     return "\n\n".join(
-        f"[글 {i}]\n제목: {post.title}\nURL: {post.url}\n작성일: {post.date}"
+        f"[글 {i}]\n제목: {post.title}\n작성일: {post.date}"
         f"\n본문:\n{post.text[:8000]}\n댓글:\n{_comments_text(post)}"
         for i, post in enumerate(posts, 1))
 
@@ -28,8 +28,8 @@ def _prompt(query: str, posts: list[CafePost]) -> str:
 2. 핵심 주제와 합의/이견을 요약
 3. 활용 가능한 정보, 팁, 수치, 주의점을 추출
 4. 'AI의 의견'에서 사실과 추론을 구분하고 자료의 한계를 제시
-5. 마지막에 제공된 URL만 이용한 '주요 글 URL' 목록 작성
-6. 댓글의 실제 해결 후기와 반대 의견을 중요하게 반영
+5. 댓글의 실제 해결 후기와 반대 의견을 중요하게 반영
+6. 출처 글 URL이나 링크 목록은 보고서에 표시하지 않음
 7. 근거가 부족한 내용은 만들어내지 말고 명시
 
 자료:

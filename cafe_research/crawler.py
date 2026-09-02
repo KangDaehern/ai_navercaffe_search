@@ -46,7 +46,7 @@ def collect_search_results(page: Page, cafe_id: str, club_id: str,
     page.wait_for_timeout(3_000)
     links = _content_frame(page).locator(
         "a.article, a.article-board, a[href*='ArticleRead'], a[href*='/articles/']")
-    posts, seen = [], set()
+    posts, seen = [], {}
     for link in links.all():
         try:
             title = " ".join(link.inner_text(timeout=1_000).split())
@@ -55,16 +55,19 @@ def collect_search_results(page: Page, cafe_id: str, club_id: str,
             continue
         navigation_url = urljoin("https://cafe.naver.com", href)
         stable_url = normalize_post_url(navigation_url)
-        if not title or not href or stable_url in seen:
+        if not title or not href:
             continue
-        seen.add(stable_url)
+        if stable_url in seen:
+            if "commentFocus=true" in navigation_url:
+                seen[stable_url].has_comments = True
+            continue
         # Keep the signed in-cafe search URL until extraction is complete.
-        posts.append(CafePost(title=title, url=navigation_url))
-        if len(posts) >= limit:
-            break
+        post = CafePost(title=title, url=navigation_url)
+        seen[stable_url] = post
+        posts.append(post)
     if not posts:
         raise RuntimeError("검색 결과가 없습니다. 가입 상태와 검색어를 확인하세요.")
-    return posts
+    return posts[:limit]
 
 def _first_text(frame: Frame, selectors: str) -> str:
     for selector in selectors.split(","):
@@ -86,7 +89,7 @@ def extract_post(page: Page, post: CafePost) -> CafePost:
     post.text = _first_text(frame, ".se-main-container, .ContentRenderer, .article_viewer, #tbody")
     post.author = _first_text(frame, ".nickname, .WriterInfo .nick, .p-nick")
     post.date = _first_text(frame, ".date, .ArticleTool .date, .article_info .date")
-    post.comments = extract_comments(frame)
+    post.comments = extract_comments(frame, post.has_comments)
     post.url = normalize_post_url(post.url)
     return post
 
@@ -97,7 +100,9 @@ def _item_text(item, selector: str) -> str:
     except Exception:
         return ""
 
-def extract_comments(frame: Frame) -> list[CafeComment]:
+def extract_comments(frame: Frame, has_comments: bool) -> list[CafeComment]:
+    if not has_comments:
+        return []
     try:
         frame.locator(".CommentItem").first.wait_for(state="attached", timeout=7_000)
     except Exception:
